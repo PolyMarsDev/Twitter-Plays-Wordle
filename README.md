@@ -4,7 +4,7 @@ Twitter Plays Wordle is a Twitter bot written with [Twitter4J](https://github.co
 
 The code was written in 3 hours, so it isn't perfect! To see the current bugs, go to [Known Issues](#known-issues).
 
-## Usage
+## How It Works
 
 - For each turn, the bot sends out a tweet of the current game status.
 - The top reply to the tweet is used as the guess for the next turn.
