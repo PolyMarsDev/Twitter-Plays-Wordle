@@ -6,65 +6,75 @@ import twitter4j.conf.ConfigurationBuilder;
 
 import java.util.*;
 
-public class Bot {
+public class Bot
+{
+	public final boolean DEBUG = false; //in debug mode, console messages are sent instead of tweets
+	public static final String USERNAME = "REPLACE_WITH_USERNAME";
+	private final String CONSUMER_KEY = "REPLACE_WITH_CONSUMER_KEY";
+	private final String CONSUMER_SECRET = "REPLACE_WITH_OAUTH_CONSUMER_SECRET";
+	private final String ACCESS_TOKEN = "REPLACE_WITH_OATH_ACCESS_TOKEN";
+	private final String ACCESS_TOKEN_SECRET = "REPLACE_WITH_OATH_ACCESS_TOKEN_SECRET";
 
-    final static boolean DEBUG = false; //in debug mode, console messages are sent instead of tweets
-    final static String USERNAME = "REPLACE_WITH_USERNAME";
-    final static String CONSUMER_KEY = "REPLACE_WITH_CONSUMER_KEY";
-    final static String CONSUMER_SECRET = "REPLACE_WITH_OAUTH_CONSUMER_SECRET";
-    final static String ACCESS_TOKEN = "REPLACE_WITH_OATH_ACCESS_TOKEN";
-    final static String ACCESS_TOKEN_SECRET = "REPLACE_WITH_OATH_ACCESS_TOKEN_SECRET";
+	public final Twitter twitter = this.getTwitterInstance();
 
-    static Scanner scan = new Scanner(System.in);
-    public static Twitter twitter = getTwitterInstance();
+	public final GameManager gameManager = new GameManager();
 
-    static GameManager gameManager = new GameManager();
-    public static void main(String[] args)
-    {
+	public Bot()
+	{
+		if(this.DEBUG)
+		{
+			System.out.println(this.gameManager.display() + "\nReply with a 5-letter guess!");
+			while(true)
+			{
+				Scanner scan = new Scanner(System.in);
+				System.out.println(this.gameManager.run(scan.nextLine()));
+			}
+		}
+		else
+		{
+			this.sendTweet(this.gameManager.display() + "\nReply with a 5-letter guess!", this.twitter);
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new ScheduledTweet(this), 60000, 60000);
+		}
+	}
 
-        if (DEBUG)
-        {
-            System.out.println(gameManager.display() + "\nReply with a 5-letter guess!");
-            while (true)
-            {
-                System.out.println(gameManager.run(scan.nextLine()));
-            }
-        }
-        else
-        {
-            sendTweet(gameManager.display() + "\nReply with a 5-letter guess!", twitter);
-            Timer timer = new Timer();
-            timer.scheduleAtFixedRate(new ScheduledTweet(), 60000, 60000);
-        }
-    }
+	public void sendTweet(String line, Twitter twitter)
+	{
+		try
+		{
+			twitter.updateStatus(line);
+		} catch(TwitterException e)
+		{
+			e.printStackTrace();
+		}
+	}
 
-    public static void sendTweet(String line, Twitter twitter) {
-        Status status;
-        try {
-            status = twitter.updateStatus(line);
-        } catch (TwitterException e) {;
-            e.printStackTrace();
-        }
-    }
-    public static Status getLatestTweet(Twitter twitter) {
-        List<Status> statusList = null;
+	public Status getLatestTweet(Twitter twitter)
+	{
+		try
+		{
+			return twitter.getUserTimeline("@" + USERNAME).get(0);
+		} catch(TwitterException e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
 
-        try {
-            statusList = twitter.getUserTimeline("@" + USERNAME);
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        return statusList.get(0);
-    }
-    private static Twitter getTwitterInstance()
-    {
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.setDebugEnabled(true)
-                .setOAuthConsumerKey(CONSUMER_KEY)
-                .setOAuthConsumerSecret(CONSUMER_SECRET)
-                .setOAuthAccessToken(ACCESS_TOKEN)
-                .setOAuthAccessTokenSecret(ACCESS_TOKEN_SECRET);
-        TwitterFactory tf = new TwitterFactory(cb.build());
-        return tf.getInstance();
-    }
+	private Twitter getTwitterInstance()
+	{
+		ConfigurationBuilder cb = new ConfigurationBuilder();
+		cb.setDebugEnabled(true)
+				.setOAuthConsumerKey(this.CONSUMER_KEY)
+				.setOAuthConsumerSecret(this.CONSUMER_SECRET)
+				.setOAuthAccessToken(this.ACCESS_TOKEN)
+				.setOAuthAccessTokenSecret(this.ACCESS_TOKEN_SECRET);
+		TwitterFactory tf = new TwitterFactory(cb.build());
+		return tf.getInstance();
+	}
+
+	public static void main(String[] args)
+	{
+		new Bot();
+	}
 }

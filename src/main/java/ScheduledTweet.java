@@ -6,45 +6,46 @@ import java.util.*;
 
 public class ScheduledTweet extends TimerTask {
 
+    private final Bot bot;
+
+    public ScheduledTweet(Bot bot){
+        this.bot = bot;
+    }
     @Override
     public void run() {
-        Status tweet = Bot.getLatestTweet(Bot.twitter);
+        Status tweet = this.bot.getLatestTweet(this.bot.twitter);
         Status topReply = null;
         int topLikes = -1;
-        for (Status t : getReplies(Bot.USERNAME, tweet.getId()))
+        for (Status t : this.getReplies(Bot.USERNAME, tweet.getId()))
         {
-            if (t.getText() != null && isValidGuess(t.getText().split(" ")[1].toLowerCase()) && t.getFavoriteCount() > topLikes)
+            if (t.getText() != null && this.isValidGuess(t.getText().split(" ")[1].toLowerCase()) && t.getFavoriteCount() > topLikes)
             {
                 topLikes = t.getFavoriteCount();
                 topReply = t;
             }
         }
+
         if (topReply != null)
-        {
-            Bot.sendTweet(Bot.gameManager.run(topReply.getText().split(" ")[1].toLowerCase()), Bot.twitter);
-        }
+            this.bot.sendTweet(this.bot.gameManager.run(topReply.getText().split(" ")[1].toLowerCase()), this.bot.twitter);
         else
-        {
-            Bot.sendTweet(Bot.gameManager.run("skip"), Bot.twitter);
-        }
+            this.bot.sendTweet(this.bot.gameManager.run("skip"), this.bot.twitter);
     }
 
-    boolean isValidGuess(String word)
+    private boolean isValidGuess(String word)
     {
         List<String> words = GameManager.getWordList();
-        if (word.length() != 5 || !words.contains(word)) return false;
-        return true;
+        return word.length() == 5 && words.contains(word);
     }
 
-    public ArrayList<Status> getReplies(String screenName, long tweetID) {
-        ArrayList<Status> replies = new ArrayList<Status>();
+    public List<Status> getReplies(String screenName, long tweetID) {
+        List<Status> replies = new ArrayList<>();
 
         try {
             Query query = new Query("to:" + screenName + " since_id:" + tweetID);
             QueryResult results;
 
             do {
-                results = Bot.twitter.search(query);
+                results = this.bot.twitter.search(query);
                 System.out.println("Results: " + results.getTweets().size());
                 List<Status> tweets = results.getTweets();
 

@@ -1,195 +1,163 @@
-//import Game.*;
-import Util.Randomizer;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class GameManager
 {
-    private String word;
-    int end = 0;
+	private static final Map<Character, String> LETTER_TO_EMOJI = new HashMap<>()
+	{{
+		//populate letter to emoji hashmap
+		this.put('a', "\uD83C\uDDE6");
+		this.put('b', "\uD83C\uDDE7");
+		this.put('c', "\uD83C\uDDE8");
+		this.put('d', "\uD83C\uDDE9");
+		this.put('e', "\uD83C\uDDEA");
+		this.put('f', "\uD83C\uDDEB");
+		this.put('g', "\uD83C\uDDEC");
+		this.put('h', "\uD83C\uDDED");
+		this.put('i', "\uD83C\uDDEE");
+		this.put('j', "\uD83C\uDDEF");
+		this.put('k', "\uD83C\uDDF0");
+		this.put('l', "\uD83C\uDDF1");
+		this.put('m', "\uD83C\uDDF2");
+		this.put('n', "\uD83C\uDDF3");
+		this.put('o', "\uD83C\uDDF4");
+		this.put('p', "\uD83C\uDDF5");
+		this.put('q', "\uD83C\uDDF6");
+		this.put('r', "\uD83C\uDDF7");
+		this.put('s', "\uD83C\uDDF8");
+		this.put('t', "\uD83C\uDDF9");
+		this.put('u', "\uD83C\uDDFA");
+		this.put('v', "\uD83C\uDDFB");
+		this.put('w', "\uD83C\uDDFC");
+		this.put('x', "\uD83C\uDDFD");
+		this.put('y', "\uD83C\uDDFE");
+		this.put('z', "\uD83C\uDDFF");
+	}};
 
-    HashMap<Character, String> letterToEmoji;
+	private static final Random RAND = new Random(System.currentTimeMillis());
 
-    List<String> guesses;
+	private String word;
+	private int end = 0;
 
-    int round;
+	private List<String> guesses = new ArrayList<>();
 
-    int currentTurn;
+	private int round;
 
-    public GameManager()
-    {
-       //pick a random word
-        word = getWord();
+	private int currentTurn;
 
-        guesses = new ArrayList<String>();
+	public GameManager()
+	{
+		//pick a random word
+		this.word = this.getWord();
+		this.round = 6;
+		this.currentTurn = 1;
+	}
 
-        round = 6;
+	public String display()
+	{
+		StringBuilder output = new StringBuilder("Wordle #" + this.round + " " + this.currentTurn + "/6\n\n");
+		for(String s : this.guesses)
+			output.append(this.wordToEmoji(s)).append("\n").append(this.getMatch(s, this.word)).append("\n");
+		return output.toString();
+	}
 
-        currentTurn = 1;
+	public String run(String input)
+	{
+		System.out.println(this.word);
+		if(this.end > 0)
+		{
+			this.end = 0;
+			this.round++;
+			//generate new word, reset guess list, etc
+			this.word = this.getWord();
+			this.guesses = new ArrayList<>();
+			this.currentTurn = 1;
+		}
 
-        //populate letter to emoji hashmap
-        letterToEmoji = new HashMap<Character, String>();
-        letterToEmoji.put('a', "\uD83C\uDDE6");
-        letterToEmoji.put('b', "\uD83C\uDDE7");
-        letterToEmoji.put('c', "\uD83C\uDDE8");
-        letterToEmoji.put('d', "\uD83C\uDDE9");
-        letterToEmoji.put('e', "\uD83C\uDDEA");
-        letterToEmoji.put('f', "\uD83C\uDDEB");
-        letterToEmoji.put('g', "\uD83C\uDDEC");
-        letterToEmoji.put('h', "\uD83C\uDDED");
-        letterToEmoji.put('i', "\uD83C\uDDEE");
-        letterToEmoji.put('j', "\uD83C\uDDEF");
-        letterToEmoji.put('k', "\uD83C\uDDF0");
-        letterToEmoji.put('l', "\uD83C\uDDF1");
-        letterToEmoji.put('m', "\uD83C\uDDF2");
-        letterToEmoji.put('n', "\uD83C\uDDF3");
-        letterToEmoji.put('o', "\uD83C\uDDF4");
-        letterToEmoji.put('p', "\uD83C\uDDF5");
-        letterToEmoji.put('q', "\uD83C\uDDF6");
-        letterToEmoji.put('r', "\uD83C\uDDF7");
-        letterToEmoji.put('s', "\uD83C\uDDF8");
-        letterToEmoji.put('t', "\uD83C\uDDF9");
-        letterToEmoji.put('u', "\uD83C\uDDFA");
-        letterToEmoji.put('v', "\uD83C\uDDFB");
-        letterToEmoji.put('w', "\uD83C\uDDFC");
-        letterToEmoji.put('x', "\uD83C\uDDFD");
-        letterToEmoji.put('y', "\uD83C\uDDFE");
-        letterToEmoji.put('z', "\uD83C\uDDFF");
-    }
+		this.guesses.add(input.equals("skip") ? this.guesses.get(this.guesses.size() - 1) : input);
+		this.currentTurn++;
 
-    public String display()
-    {
-        String output = "Wordle #" + String.valueOf(round) + " " + currentTurn + "/6\n\n";
-        for (String s : guesses)
-        {
-            output += wordToEmoji(s) + "\n" + getMatch(s, word) + "\n";
-        }
-        return output;
-    }
-    public String run(String input)
-    {
-        System.out.println(word);
-        if (end > 0)
-        {
-            end = 0;
-            round++;
-            //generate new word, reset guess list, etc
-            word = getWord();
-            guesses = new ArrayList<String>();
-            currentTurn = 1;
-        }
-        if (!input.equals("skip")) {
-            guesses.add(input);
-            currentTurn++;
-        }
-        else
-        {
-            guesses.add(guesses.get(guesses.size() - 1));
-            currentTurn++;
-        }
+		if(input.equals(this.word))
+		{
+			this.currentTurn -= 1;
+			this.end = 1;
+			return this.display() + "\nYou win!";
+		}
+		else if(this.currentTurn > 6)
+		{
+			this.end = 2;
+			return this.display() + "\nThe word was " + this.word + ".";
+		}
 
-        if (input.equals(word))
-        {
-            currentTurn -= 1;
-            end = 1;
-            return display() + "\nYou win!";
-        }
-        else if (currentTurn > 6)
-        {
-            end = 2;
-            return display() + "\nThe word was " + word + ".";
-        }
+		return this.display() + "\nReply with a 5-letter guess!";
+	}
 
-        return display() + "\nReply with a 5-letter guess!";
-    }
+	public String getWord()
+	{
+		List<String> words = getWordList();
+		if(words.size() == 0)
+			return "";
+		return words.get(RAND.nextInt(words.size()));
+	}
 
-    public String getWord()
-    {
-        try{
-            BufferedReader reader = new BufferedReader(new FileReader("words.txt"));
-            String line = reader.readLine();
-            List<String> words = new ArrayList<String>();
-            while(line != null) {
-                String[] wordsLine = line.split(" ");
-                for(String word : wordsLine) {
-                    words.add(word);
-                }
-                line = reader.readLine();
-            }
+	public static List<String> getWordList()
+	{
+		List<String> words = new ArrayList<>();
+		try
+		{
+			BufferedReader reader = new BufferedReader(new FileReader("words.txt"));
+			String line = reader.readLine();
+			while(line != null)
+			{
+				Collections.addAll(words, line.split(" "));
+				line = reader.readLine();
+			}
+		} catch(Exception e)
+		{
+			System.out.println("Cannot access file");
+		}
+		return words;
+	}
 
-            Random rand = new Random(System.currentTimeMillis());
-            String randomWord = words.get(rand.nextInt(words.size()));
-            return randomWord;
-        } catch (Exception e) {
-            System.out.println("Cannot access file");
-        }
-        return "";
-    }
+	public String wordToEmoji(String word)
+	{
+		StringBuilder result = new StringBuilder();
+		for(int i = 0; i < word.length(); i++)
+			result.append(LETTER_TO_EMOJI.get(word.charAt(i))).append(" ");
+		return result.toString();
+	}
 
-    public static List<String> getWordList()
-    {
-        try{
-            BufferedReader reader = new BufferedReader(new FileReader("words.txt"));
-            String line = reader.readLine();
-            List<String> words = new ArrayList<String>();
-            while(line != null) {
-                String[] wordsLine = line.split(" ");
-                for(String word : wordsLine) {
-                    words.add(word);
-                }
-                line = reader.readLine();
-            }
-            return words;
-        } catch (Exception e) {
-            System.out.println("Cannot access file");
-        }
-        return null;
-    }
+	public String getMatch(String guess, String word)
+	{
+		String[] match = new String[5];
+		StringBuilder tempGuess = new StringBuilder();
+		for(int i = 0; i < guess.length(); i++)
+		{
+			if(guess.charAt(i) == word.charAt(i))
+			{
+				match[i] = "\uD83D\uDFE9";
+				tempGuess.append("0");
+			}
+			else
+			{
+				match[i] = "⬛";
+				tempGuess.append(guess.charAt(i));
+			}
+		}
 
-    public String wordToEmoji(String word)
-    {
-        String result = "";
-        for (int i = 0; i < word.length(); i++)
-        {
-            result += letterToEmoji.get(word.charAt(i)) + " ";
-        }
-        return result;
-    }
+		for(int i = 0; i < tempGuess.length(); i++)
+			if(word.contains(String.valueOf(tempGuess.charAt(i))) && match[i].equals("⬛"))
+				match[i] = "\uD83D\uDFE8";
 
-    public String getMatch(String guess, String word)
-    {
-        String[] match = new String[5];
-        String tempGuess = "";
-        for (int i = 0; i < guess.length(); i++)
-        {
-            if (guess.charAt(i) == word.charAt(i))
-            {
-                match[i] = "\uD83D\uDFE9";
-                tempGuess += "0";
-            }
-            else
-            {
-                match[i] = "⬛";
-                tempGuess += guess.charAt(i);
-            }
-        }
-        for (int i = 0; i < tempGuess.length(); i++)
-        {
-            if (word.contains(String.valueOf(tempGuess.charAt(i))))
-            {
-                if (match[i] == "⬛")
-                {
-                    match[i] = "\uD83D\uDFE8";
-                }
-            }
-        }
-        String matchString = "";
-        for (String s : match) matchString += s + " ";
-        return matchString;
-    }
+		StringBuilder matchString = new StringBuilder();
+		for(String s : match)
+			matchString.append(s).append(" ");
+		return matchString.toString();
+	}
 }
